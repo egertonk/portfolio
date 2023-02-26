@@ -1,7 +1,7 @@
 {
   "name": "egerton-portfolio",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "homepage": "https://egertonk.github.io/portfolio/",
   "dependencies": {
     "@reduxjs/toolkit": "^1.9.2",
