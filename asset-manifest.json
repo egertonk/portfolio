@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/portfolio/static/css/main.531f6856.css",
+    "main.js": "/portfolio/static/js/main.419a28d7.js",
+    "static/js/787.31de5541.chunk.js": "/portfolio/static/js/787.31de5541.chunk.js",
+    "static/media/Things-to-do-in-Chicago-Millennium-Park.jpg": "/portfolio/static/media/Things-to-do-in-Chicago-Millennium-Park.c451c08fee8132bba05b.jpg",
+    "static/media/EgertonDuring.jpg": "/portfolio/static/media/EgertonDuring.c120cf592b91deea052d.jpg",
+    "index.html": "/portfolio/index.html",
+    "main.531f6856.css.map": "/portfolio/static/css/main.531f6856.css.map",
+    "main.419a28d7.js.map": "/portfolio/static/js/main.419a28d7.js.map",
+    "787.31de5541.chunk.js.map": "/portfolio/static/js/787.31de5541.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.531f6856.css",
+    "static/js/main.419a28d7.js"
+  ]
+}
