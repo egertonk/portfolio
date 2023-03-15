@@ -37,6 +37,7 @@ export const NavMenu = () => {
                 <Link
                   to={`${item.toLocaleLowerCase()}`}
                   className="block mx-4 mt-2 md:mt-0 text-sm text-gray-700 capitalize hover:text-blue-600"
+                  key={`${index}-link`}
                 >
                   {item}
                 </Link>

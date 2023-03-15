@@ -29,3 +29,22 @@ export type SkillTypes = {
   skillCategory: string;
   skill_id: number;
 };
+
+export type BudgetTypes = {
+  id: number;
+  itemName: string;
+  itemAmount: number;
+  tableName: string;
+}[];
+
+export type SingleBudgetTypes = {
+  id?: number;
+  itemName: string;
+  itemAmount: number;
+  tableName: string;
+};
+
+export type DeleteBudgetTypes = {
+  id?: number;
+  tableName: string;
+};
