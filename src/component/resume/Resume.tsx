@@ -2,6 +2,7 @@ import React from "react";
 import { Education, Experiences, NavMenu, Projects, Skills } from ".";
 import profileImage from "../../support-files/images/EgertonDuring.jpg";
 import backgroundImage from "../../support-files/images/Things-to-do-in-Chicago-Millennium-Park.jpg";
+import { SiteHeader } from "../site-header/SiteHeader";
 import { resumeAPI, url } from "../utils-api/connection-data";
 import { useGetUser } from "../utils-api/get.API";
 import { CategoryHeader } from "./CategoryHeader";
@@ -36,11 +37,8 @@ export const Resume = () => {
   // }, [user]);
   return (
     <>
+      <SiteHeader header="Resume" />
       <div className="grid place-items-center w-50 bg-cover">
-        <h1 className="text-white text-2xl font-semibold md:text-3xl">
-          Leave a Better World
-        </h1>
-
         <div className="flex flex-col items-center text-white justify-center p-2 text-center md:rounded-br-lg w-full ">
           <a
             href="#"

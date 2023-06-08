@@ -37,14 +37,19 @@ export type BudgetTypes = {
   tableName: string;
 }[];
 
-export type SingleBudgetTypes = {
+export type TableTypes = {
   id?: number;
-  itemName: string;
-  itemAmount: number;
+  itemName?: string;
+  itemAmount?: number;
+  tableName?: string;
+};
+
+export type ActiveTablesTypes = {
+  id?: number;
   tableName: string;
 };
 
-export type DeleteBudgetTypes = {
-  id?: number;
-  tableName: string;
-};
+export type YearlyTotals = {
+  name?: string;
+  amount?: number;
+}[];

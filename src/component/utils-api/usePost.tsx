@@ -1,10 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addBudgetItemData, deleteBudgetItemData, updateBudgetItemData } from "./post.API";
+import {
+  addBudgetItemData,
+  addTable,
+  deleteBudgetItemData,
+  deleteTable,
+  updateBudgetItemData,
+} from "./post.API";
 
 // todo remove any
 export const usePostMutation = (): Record<string, any> => {
   const queryClient = useQueryClient();
   const invalidateBudget = () => queryClient.invalidateQueries(["budget"]);
+  const invalidateAddTable = () =>
+    queryClient.invalidateQueries(["active-tables-list"]);
+
   // Finance
   const useAddBudget = useMutation(addBudgetItemData, {
     onSuccess: (res) => {
@@ -24,5 +33,25 @@ export const usePostMutation = (): Record<string, any> => {
     },
   });
 
-  return { useAddBudget, useDeletBudget, useUpdateBudget };
+  // Manager
+  const useAddTable = useMutation(addTable, {
+    onSuccess: (res) => {
+      invalidateAddTable();
+      invalidateBudget();
+    },
+  });
+
+  const useDeletTable = useMutation(deleteTable, {
+    onSuccess: (res) => {
+      invalidateAddTable();
+      invalidateBudget();
+    },
+  });
+  return {
+    useAddBudget,
+    useDeletBudget,
+    useUpdateBudget,
+    useAddTable,
+    useDeletTable,
+  };
 };

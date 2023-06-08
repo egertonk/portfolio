@@ -1,47 +1,114 @@
-import React, { useMemo, useState } from "react";
-import { toggleSVG } from "../resume";
-import { useGetBudgetDetails, useGetUser } from "../utils-api/get.API";
+import { useMemo, useState } from "react";
+import { BudgetTypes, toggleSVG } from "../resume";
+import { SiteHeader } from "../site-header/SiteHeader";
+import {
+  useGetActiveTables,
+  useGetBudgetDetails,
+  useGetUser,
+} from "../utils-api/get.API";
 import { usePostMutation } from "../utils-api/usePost";
+import { FinanceStatusCard } from "./FinanceStatusCard";
+import {
+  buttonAction,
+  findActiveTable,
+  findToggleTable,
+  getTable,
+  getTableName,
+  getTotal,
+  getWeekNames,
+  removeDuplicates,
+} from "./FinanceHelpers";
+import { FinanceTableTotals } from "./FinanceTableTotals";
+import { FinanceAddTable } from "./FinanceAddTable";
 
 export const Finance = () => {
   // const { data: user } = useGetUser();
   const { data: budgetDetails } = useGetBudgetDetails();
-  const { useAddBudget, useDeletBudget, useUpdateBudget } = usePostMutation();
-
+  const { data: activeTables } = useGetActiveTables();
+  const {
+    useAddBudget,
+    useDeletBudget,
+    useUpdateBudget,
+    useAddTable,
+    useDeletTable,
+  } = usePostMutation();
   const [name, setName] = useState<string>("");
   const [addTable, setAddTable] = useState<string>();
   const [editName, setEditName] = useState<string>();
+  const [addName, setAddName] = useState<string>();
+  const [addAmount, setAddAmount] = useState<number>();
   const [editID, setEditID] = useState<number>();
   const [editList, setEditList] = useState<number[]>([]);
   const [amount, setAmount] = useState<number>(0);
   const [toggle, setToggleList] = useState<string[]>([]);
 
-  const budgetWeekNames = useMemo(() => {
-    let tempWeekNames: string[] = [];
-    budgetDetails !== undefined &&
-      budgetDetails?.forEach((data) => {
-        data.forEach((item) => tempWeekNames.push(item.tableName));
-      });
-    return Array.from(new Set(tempWeekNames));
-  }, [budgetDetails]);
+  const allBudetDetails = [] as BudgetTypes[];
+  const barDetails = [] as {
+    id: string;
+    value: number;
+  }[];
 
-  const handleDelete = (cellId: number, table: string) => {
-    useDeletBudget.mutate({
-      id: cellId,
-      tableName: table,
+  const budgetWeekNames = useMemo(
+    () => removeDuplicates(getWeekNames(activeTables)),
+    [activeTables]
+  );
+
+  const budgetData = useMemo(() => {
+    budgetDetails?.forEach((data) => {
+      if (data.length !== 0) {
+        allBudetDetails.push(data);
+      } else {
+        activeTables?.forEach((data) => {
+          if (getTable(data.tableName, budgetDetails) === undefined) {
+            allBudetDetails?.push([
+              {
+                id: 0,
+                itemAmount: 0,
+                itemName: "",
+                tableName: data.tableName,
+              },
+            ]);
+          }
+        });
+      }
     });
+
+    return allBudetDetails;
+  }, [activeTables, allBudetDetails, budgetDetails]);
+
+  const barData = useMemo(() => {
+    budgetData?.forEach((data) => {
+      data.forEach((item) =>
+        barDetails.push({ id: item.itemName, value: item.itemAmount })
+      );
+    });
+    return barDetails;
+  }, [budgetData]);
+
+  const handleDelete = (table: string, cellId?: number) => {
+    if (cellId === undefined) {
+      const tableData = findActiveTable(table, activeTables);
+      useDeletTable.mutate(tableData[0]);
+    } else {
+      useDeletBudget.mutate({
+        id: cellId,
+        tableName: table,
+      });
+    }
   };
 
   const handleSubmit = (tableName: string, cellId?: number) => {
-    if (cellId === undefined && name && amount && tableName) {
+    if (cellId === undefined) {
       useAddBudget.mutate({
-        itemName: name,
-        itemAmount: amount,
+        itemName: addName,
+        itemAmount: addAmount,
         tableName: tableName,
       });
+      setAddName("");
+      setAddAmount(0);
       resetNewForm();
     }
-    if (cellId && name && amount && tableName) {
+    if (cellId) {
       useUpdateBudget.mutate({
         id: cellId,
         itemName: name,
@@ -69,10 +136,8 @@ export const Finance = () => {
   const editStatus = (
     budgetItemId: Number | undefined,
     budgetItemTableName: string | undefined
-  ) => budgetItemId === editID && editName === budgetItemTableName;
-
-  const handleAddItem = (tableName: string) => {
-    if (name === "" && amount <= 0) setAddTable(tableName);
+  ) => {
+    return budgetItemId === editID && editName === budgetItemTableName;
   };
 
   const handleToggle = (tableName: string) => {
@@ -81,8 +146,12 @@ export const Finance = () => {
     else setToggleList((toggle) => [...toggle, tableName]);
   };
 
-  const findTable = (tableName: string) =>
-    toggle.find((table) => table === tableName) == undefined;
+  const addNewTable = (tableName: string) => {
+    useAddTable.mutate({
+      id: 0,
+      tableName: tableName,
+    });
+  };
 
   const userInputs = (
     indexNumber: number,
@@ -95,50 +164,45 @@ export const Finance = () => {
       className="w-64 p-2 bg-white text-black text-left border border-slate-300 ... peer block min-h-[auto] w-full rounded border-0 bg-transparent py-[0.32rem] px-3 leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0"
       id={
         action === "add"
-          ? `${
-              budgetDetails !== undefined &&
-              budgetDetails[indexNumber][0].tableName
-            }-${id}`
-          : `${
-              budgetDetails !== undefined && budgetDetails[indexNumber][0].id
-            }-${id}`
+          ? `${budgetData[indexNumber][0]?.tableName}-${id}`
+          : `${budgetData[indexNumber][0].id}-${id}`
       }
       name={id}
-      value={type === "text" ? name : amount}
+      value={
+        type === "text"
+          ? action === "add"
+            ? addName
+            : name
+          : action === "add"
+          ? addAmount
+          : amount
+      }
       onChange={(e) =>
         type === "text"
-          ? setName(e.currentTarget.value)
+          ? action === "add"
+            ? setAddName(e.currentTarget.value)
+            : setName(e.currentTarget.value)
+          : action === "add"
+          ? setAddAmount(parseFloat(e.currentTarget.value))
           : setAmount(parseFloat(e.currentTarget.value))
       }
     />
   );
 
-  const buttons = (
-    action: string,
-    onClick?: React.MouseEventHandler<HTMLButtonElement> | undefined
-  ) => (
-    <button
-      type="button"
-      className={
-        action === "Submit" || action === "Edit"
-          ? "text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2"
-          : "text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
-      }
-      onClick={onClick}
-    >
-      {action}
-    </button>
-  );
-
   return (
     <>
-      <h1 className="text-white text-2xl font-semibold md:text-3xl">
-        Bi Weekly Family Budget
-      </h1>
+      <SiteHeader header={`${new Date().getFullYear()} Ultimate Budget`} />
+
+      <FinanceStatusCard barData={barData} />
+
+      <FinanceAddTable activeTables={activeTables} addNewTable={addNewTable} />
 
       <div className="flex flex-row flex flex-row container mx-auto px-6 py-3 grid grid-cols-2 gap-4">
-        {budgetWeekNames.map((weekName, index) => (
+        {budgetWeekNames?.map((weekName, index) => (
           <div key={`${index}-table`}>
+            <div className="flex flex-row-reverse">
+              {buttonAction("Delete Table", () => handleDelete(weekName))}
+            </div>
             <table
               key={`${index}-table`}
               className="flex-row table-fixed text-white border-separate border-spacing-2 "
@@ -146,14 +210,14 @@ export const Finance = () => {
               <thead>
                 <tr className="bg-resume-box text-center">
                   <th className="w-64 p-2 bg-resume-box text-center border border-slate-300 ...">
-                    {weekName}
+                    {getTableName(weekName)}
                   </th>
                   <th className="w-64 p-2 text-center border border-slate-300">
                     <button
                       type="button"
                       className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
                       disabled={addTable === weekName}
-                      onClick={() => handleAddItem(weekName)}
+                      onClick={() => setAddTable(weekName)}
                     >
                       Add Item
                     </button>
@@ -164,7 +228,7 @@ export const Finance = () => {
                     </button>
                   </th>
                 </tr>
-                {findTable(weekName) && (
+                {findToggleTable(weekName, toggle) && (
                   <tr>
                     <th className="w-64 p-2 bg-resume-box text-center border border-slate-300 ...">
                       Name
@@ -178,91 +242,98 @@ export const Finance = () => {
                   </tr>
                 )}
               </thead>
-              {findTable(weekName) && (
+
+              {findToggleTable(weekName, toggle) && (
                 <>
                   <tbody>
-                    {budgetDetails !== undefined &&
-                      budgetDetails[index]?.map((budgetItem) => (
-                        <tr key={`${budgetItem.id}-data`}>
-                          <>
-                            <td className="p-2 bg-white text-black text-left border border-slate-300 ...">
-                              {editStatus(budgetItem.id, budgetItem.tableName)
-                                ? userInputs(index, "name", "text")
-                                : budgetItem.itemName}
-                            </td>
-                            <td className="p-2 bg-white text-black border border-slate-300 text-right ...">
-                              {editStatus(
-                                budgetItem.id,
-                                budgetItem.tableName
-                              ) ? (
-                                userInputs(index, "amount", "number")
-                              ) : (
-                                <>${budgetItem.itemAmount}</>
-                              )}
-                            </td>
-                            <td className="p-2 bg-white text-black border border-slate-300 ...">
-                              {editStatus(
-                                budgetItem.id,
-                                budgetItem.tableName
-                              ) && (
-                                <>
-                                  {buttons("Submit", () => {
-                                    setEditList(
-                                      editList.filter(
-                                        (e) => e !== budgetItem.id
+                    {budgetData[index]?.map(
+                      (budgetItem) =>
+                        budgetItem.itemName !== "" &&
+                        budgetItem.itemAmount !== 0 && (
+                          <tr key={`${budgetItem.id}-data`}>
+                            <>
+                              <td className="pl-2 bg-white text-black text-left border border-slate-300 ...">
+                                {editStatus(budgetItem.id, budgetItem.tableName)
+                                  ? userInputs(index, "name", "text")
+                                  : budgetItem.itemName}
+                              </td>
+                              <td className="pl-2 bg-white text-black border border-slate-300 text-right ...">
+                                {editStatus(
+                                  budgetItem.id,
+                                  budgetItem.tableName
+                                ) ? (
+                                  userInputs(index, "amount", "number")
+                                ) : (
+                                  <>${budgetItem.itemAmount}</>
+                                )}
+                              </td>
+                              <td className="pl-2 bg-white text-black border border-slate-300 ...">
+                                {editStatus(
+                                  budgetItem.id,
+                                  budgetItem.tableName
+                                ) && (
+                                  <>
+                                    {buttonAction("Submit", () => {
+                                      setEditList(
+                                        editList.filter(
+                                          (e) => e !== budgetItem.id
+                                        )
+                                      );
+                                      handleSubmit(
+                                        budgetItem.tableName,
+                                        budgetItem.id
+                                      );
+                                    })}
+                                    {buttonAction("Cancel", handleCancelItem)}
+                                  </>
+                                )}{" "}
+                                {editList.length === 0 && (
+                                  <>
+                                    {buttonAction("Edit", () => {
+                                      setEditList((editList) => [
+                                        ...editList,
+                                        budgetItem.id,
+                                      ]);
+                                      setEditName(budgetItem.tableName);
+                                      setEditID(budgetItem.id);
+                                      setName(budgetItem.itemName);
+                                      setAmount(budgetItem.itemAmount);
+                                    })}
+                                    {buttonAction("Delete", () =>
+                                      handleDelete(
+                                        budgetItem.tableName,
+                                        budgetItem.id
                                       )
-                                    );
-                                    handleSubmit(
-                                      budgetItem.tableName,
-                                      budgetItem.id
-                                    );
-                                  })}
-                                  {buttons("Cancel", handleCancelItem)}
-                                </>
-                              )}{" "}
-                              {editList.length === 0 && (
-                                <>
-                                  {buttons("Edit", () => {
-                                    setEditList((editList) => [
-                                      ...editList,
-                                      budgetItem.id,
-                                    ]);
-                                    setEditName(budgetItem.tableName);
-                                    setEditID(budgetItem.id);
-                                    setName(budgetItem.itemName);
-                                    setAmount(budgetItem.itemAmount);
-                                  })}
-                                  {buttons("Delete", () =>
-                                    handleDelete(
-                                      budgetItem.id,
-                                      budgetItem.tableName
-                                    )
-                                  )}
-                                </>
-                              )}
-                            </td>
-                          </>
-                        </tr>
-                      ))}
+                                    )}
+                                  </>
+                                )}
+                              </td>
+                            </>
+                          </tr>
+                        )
+                    )}
+
+                    <FinanceTableTotals
+                      total={getTotal(weekName, budgetDetails)}
+                    />
                   </tbody>
                   <tr>
-                    {budgetDetails !== undefined &&
-                      addTable === budgetDetails[index][0].tableName && (
-                        <>
-                          <td className="p-2 bg-white text-black text-left border border-slate-300 ...">
-                            {userInputs(index, "name", "text", "add")}
-                          </td>
-                          <td className="p-2 bg-white text-black border border-slate-300 ...">
-                            {userInputs(index, "amount", "number", "add")}
-                          </td>
-                          <td className="bg-white text-black border border-slate-300 ...">
-                            {buttons("Submit", () =>
-                              handleSubmit(budgetDetails[index][0].tableName)
-                            )}
-                            {buttons("Cancel", handleCancelItem)}
-                          </td>
-                        </>
-                      )}
+                    {addTable === budgetData[index][0]?.tableName && (
+                      <>
+                        <td className="pl-2 bg-white text-black text-left border border-slate-300 ...">
+                          {userInputs(index, "name", "text", "add")}
+                        </td>
+                        <td className="pl-2 bg-white text-black border border-slate-300 ...">
+                          {userInputs(index, "amount", "number", "add")}
+                        </td>
+                        <td className="bg-white text-black border border-slate-300 ...">
+                          {buttonAction("Submit", () =>
+                            handleSubmit(budgetData[index][0]?.tableName)
+                          )}
+                          {buttonAction("Cancel", handleCancelItem)}
+                        </td>
+                      </>
+                    )}
                   </tr>
                 </>
               )}

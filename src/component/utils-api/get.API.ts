@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { BudgetTypes, JobTypes, ProjectsTypes, SkillTypes } from "../resume/Data-Types";
-import { financeAPI, resumeAPI, url } from "./connection-data";
+import {
+  ActiveTablesTypes,
+  BudgetTypes,
+  JobTypes,
+  ProjectsTypes,
+  SkillTypes,
+} from "../resume/Data-Types";
+import { financeAPI, managerAPI, resumeAPI, url } from "./connection-data";
 import { getWrapper } from "./fetch";
 
 // user
@@ -40,10 +46,26 @@ export const useGetProjects = () => {
 };
 
 // Finance
-export const getBudgetDetails = (endpointName: string): Promise<BudgetTypes[]> => {
+export const getBudgetDetails = (
+  endpointName: string
+): Promise<BudgetTypes[]> => {
   return getWrapper(`${url}/${financeAPI}/${endpointName}`);
 };
 
 export const useGetBudgetDetails = () => {
   return useQuery([`budget`], () => getBudgetDetails("budget"));
+};
+
+// Manager
+export const getActiveTables = (
+  endpointName: string
+): Promise<ActiveTablesTypes[]> => {
+  return getWrapper(`${url}/${managerAPI}/${endpointName}`);
+};
+
+export const useGetActiveTables = () => {
+  return useQuery(
+    [`active-tables-list`],
+    () => getActiveTables("active-list") || []
+  );
 };

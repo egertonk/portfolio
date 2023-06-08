@@ -1,5 +1,4 @@
-import { url } from "inspector";
-import { SingleBudgetTypes, DeleteBudgetTypes } from "../resume";
+import { TableTypes } from "../resume";
 
 const handlerError = async (
   res: Response,
@@ -17,13 +16,14 @@ const handlerError = async (
     throw new Error("eddddddddddd");
   } else {
     throw new Error(
-      response?.error || String(response?.errors) || "ddddddddddddddbbbbbb"
+      // response?.error || String(response?.errors) || "ddddddddddddddbbbbbb"
+      "ddddddddddddddbbbbbb"
     );
   }
 };
 
 export const getWrapper = async (url: string) =>
-  fetch(url).then((response) => response.json());
+  fetch(url).then((response) => response.json() || []);
 
 // export const getWrapper = async (
 //   url: string,
@@ -45,29 +45,18 @@ export const getWrapper = async (url: string) =>
 //     .then((data) => data);
 // };
 
-export const postWrapper = async (
+export const fetchWrapper = async (
   targetEndpoint: string,
-  body: SingleBudgetTypes
+  body: TableTypes,
+  postAction: string
 ) =>
   fetch(`${targetEndpoint}`, {
-    method: "POST",
+    method: `${postAction}`,
     mode: "cors",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
     //   mode: "cors",
-  }).then((data) => data);
-
-export const putWrapper = async (
-  targetEndpoint: string,
-  body: SingleBudgetTypes
-) =>
-  fetch(`${targetEndpoint}`, {
-    method: "PUT",
-    mode: "cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    //   mode: "cors",
-  }).then((data) => data);
+  }).then((data) => data || []);
 
 export const deletWrapperWithID = async (targetEndpoint: string) =>
   fetch(`${targetEndpoint}`, {
@@ -75,4 +64,4 @@ export const deletWrapperWithID = async (targetEndpoint: string) =>
     mode: "cors",
     headers: { "Content-Type": "application/json" },
     //   mode: "cors",
-  }).then((data) => data);
+  }).then((data) => data || []);
